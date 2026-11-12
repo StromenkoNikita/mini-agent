@@ -27,9 +27,8 @@ class Agent:
         self.client = OpenAI()
         self.model = model
 
-    def run(self, message: str) -> str:
+    def run(self, messages: list[dict]) -> list[dict]:
 
-        messages = [{"role": "user", "content": message}]
         for step in range(5):
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -48,4 +47,4 @@ class Agent:
                 print(f"[step {step}] {call.function.name}({args}) -> {result}")
                 messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
 
-        return ""
+        return messages
