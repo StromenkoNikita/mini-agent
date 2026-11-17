@@ -44,14 +44,28 @@ def fill_tools():
         print(f"Error: Invalid JSON format - {e}")
 
 
+class LlmCallInfo:
+    total_prompt_tokens: int
+    batch_size: int
+    batch_tokens_size: int
+
+    def __init__(self, total_prompt_tokens: int, batch_size: int, batch_tokens_size: int):
+        self.total_prompt_tokens = total_prompt_tokens
+        self.batch_size = batch_size
+        self.batch_tokens_size = batch_tokens_size
+
+
 class Agent:
     def __init__(self, model: str):
         self.client = OpenAI()
         self.model = model
         fill_tools()
 
-    def run(self, messages: list[dict]) -> list[dict]:
+    def run(self, message: dict, messages: list, prompt_tokens: int) -> LlmCallInfo:
+        messages_len_before_call = len(messages)
 
+        messages.append(message)
+        llm_call: LlmCallInfo
         for step in range(5):
             try:
                 response = self.client.chat.completions.create(
@@ -68,6 +82,7 @@ class Agent:
 
             if not msg.tool_calls:
                 print("Result:", msg.content)
+                llm_call = LlmCallInfo(total_prompt_tokens=response.usage.prompt_tokens, batch_tokens_size=response.usage.prompt_tokens - prompt_tokens, batch_size=len(messages) - messages_len_before_call)
                 break
             for call in msg.tool_calls:
                 args = json.loads(call.function.arguments)
@@ -75,4 +90,4 @@ class Agent:
                 print(f"[step {step}] {call.function.name}({args}) -> {result}")
                 messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
 
-        return messages
+        return llm_call
