@@ -19,7 +19,7 @@ if __name__ == '__main__':
             while window[-1].total_prompt_tokens > 500 and len(window) > 1:
                 remove = window.pop(0)
                 window[-1].total_prompt_tokens -= remove.batch_tokens_size
-                context = context[remove.batch_size:-1]
+                context = context[remove.batch_size:]
         window.append(agent.run(message={"role": "user", "content": expression},
                                 messages=context,
                                 prompt_tokens=window[-1].total_prompt_tokens if len(window) > 0 else 0))
